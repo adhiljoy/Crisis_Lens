@@ -9,13 +9,13 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const reports = db.getReports();
+    const reports = await db.getReports();
     const stats = {
-      totalUsers: db.getUsersCount(), // Need to add this to db.ts
+      totalUsers: await db.getUsersCount(),
       totalReports: reports.length,
-      criticalAlerts: reports.filter(r => r.severity === 'CRITICAL').length,
-      activeSessions: db.getActiveSessionsCount(), // Or just a mock if not tracked
-      resolvedReports: reports.filter(r => r.status === 'RESOLVED').length
+      criticalAlerts: reports.filter((r: any) => r.severity === 'CRITICAL').length,
+      activeSessions: await db.getActiveSessionsCount(),
+      resolvedReports: reports.filter((r: any) => r.status === 'RESOLVED').length
     };
 
     return NextResponse.json({ success: true, data: stats });

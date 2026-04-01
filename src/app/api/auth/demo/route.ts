@@ -15,20 +15,20 @@ export async function POST(req: Request) {
     console.log(`[DEMO_AUTH_UPLINK] Initiated for: ${normalizedEmail}`);
 
     // Auto-create user if not exists
-    let user = db.getUserByEmail(normalizedEmail);
+    let user = await db.getUserByEmail(normalizedEmail);
     if (!user) {
       console.log(`[USER_PROVISION] New operator identity created for: ${normalizedEmail}`);
-      user = db.createUser(normalizedEmail);
+      user = await db.createUser(normalizedEmail);
     }
 
     // Role Escalation
     const role = normalizedEmail === 'adhiljoyappu@gmail.com' ? 'admin' : 'user';
 
     // Lock session
-    await createSession(user.id, normalizedEmail, role);
+    await createSession(user._id.toString(), normalizedEmail, role);
 
     // Activity logging
-    db.logActivity({ 
+    await db.logActivity({ 
       email: normalizedEmail, 
       action: 'LOGIN',
       data: { role, method: 'Simulated OAuth' } 

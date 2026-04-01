@@ -14,8 +14,8 @@ export async function POST(req: Request) {
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Save to Mock DB (5 min expiry)
-    db.saveOtp(email, otp);
+    // Save to Persistent DB (5 min expiry)
+    await db.saveOtp(email, otp);
 
     console.log(`[HANDSHAKE INITIATED] Target: ${email}`);
 

@@ -1,21 +1,24 @@
-import crypto from 'crypto';
+import connectDB from '../../backend/db';
+import User from '../../backend/models/User';
+import OTP from '../../backend/models/OTP';
+import Report from '../../backend/models/Report';
+import ActivityLog from '../../backend/models/ActivityLog';
 
-export interface User {
-  id: string;
+export interface UserType {
   email: string;
   role: 'admin' | 'user';
-  createdAt: number;
+  createdAt: Date;
 }
 
 export interface OTPRecord {
   email: string;
   otp: string;
-  expiresAt: number;
+  expiresAt: Date;
   attempts: number;
 }
 
-export interface Report {
-  id: string;
+export interface ReportType {
+  id?: string;
   email: string;
   type: string;
   severity: string;
@@ -29,125 +32,87 @@ export interface Report {
   actions: string[];
 }
 
-export interface ActivityLog {
-  id: string;
+export interface ActivityLogType {
   email: string;
   action: 'LOGIN' | 'LOGOUT' | 'REPORT' | 'ANALYSIS';
-  timestamp: number;
+  timestamp: Date;
   data?: any;
 }
 
-interface DBState {
-  users: Map<string, User>;
-  otps: Map<string, OTPRecord>;
-  reports: Map<string, Report>;
-  logs: Map<string, ActivityLog>;
-}
-
-const getDBState = (): DBState => {
-  if (!(globalThis as any).__NEXUS_DB_MAPMAP) {
-    (globalThis as any).__NEXUS_DB_MAPMAP = { 
-      users: new Map<string, User>(), 
-      otps: new Map<string, OTPRecord>(), 
-      reports: new Map<string, Report>(),
-      logs: new Map<string, ActivityLog>()
-    };
-  }
-  return (globalThis as any).__NEXUS_DB_MAPMAP;
-};
-
 export const db = {
-  getUserByEmail: (email: string) => {
-    const state = getDBState();
-    return state.users.get(email.trim().toLowerCase()) || null;
+  getUserByEmail: async (email: string) => {
+    await connectDB();
+    return await User.findOne({ email: email.trim().toLowerCase() }).lean();
   },
-  createUser: (email: string) => {
-    const state = getDBState();
+  createUser: async (email: string) => {
+    await connectDB();
     const normalizedEmail = email.trim().toLowerCase();
     const isAdmin = normalizedEmail === 'adhiljoyappu@gmail.com';
-    let id: string;
-    try {
-      id = crypto.randomUUID();
-    } catch {
-      id = `usr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
-    const newUser: User = { 
-      id, 
-      email: normalizedEmail, 
-      role: isAdmin ? 'admin' : 'user', 
-      createdAt: Date.now() 
-    };
-    state.users.set(normalizedEmail, newUser);
-    return newUser;
+    return await User.create({
+      email: normalizedEmail,
+      role: isAdmin ? 'admin' : 'user'
+    });
   },
-  saveOtp: (email: string, otp: string) => {
-    const state = getDBState();
+  saveOtp: async (email: string, otp: string) => {
+    await connectDB();
     const normalizedEmail = email.trim().toLowerCase();
-    state.otps.set(normalizedEmail, {
+    // Clear old OTPs for this user
+    await OTP.deleteMany({ email: normalizedEmail });
+    return await OTP.create({
       email: normalizedEmail,
       otp,
-      expiresAt: Date.now() + 5 * 60 * 1000,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       attempts: 0
     });
   },
-  getOtpRecord: (email: string) => {
-    const state = getDBState();
-    return state.otps.get(email.trim().toLowerCase()) || null;
+  getOtpRecord: async (email: string) => {
+    await connectDB();
+    return await OTP.findOne({ email: email.trim().toLowerCase() }).lean();
   },
-  incrementOtpAttempt: (email: string) => {
-    const state = getDBState();
+  incrementOtpAttempt: async (email: string) => {
+    await connectDB();
     const normalizedEmail = email.trim().toLowerCase();
-    const record = state.otps.get(normalizedEmail);
-    if (record) {
-      record.attempts += 1;
-      state.otps.set(normalizedEmail, record);
-    }
+    await OTP.updateOne({ email: normalizedEmail }, { $inc: { attempts: 1 } });
   },
-  deleteOtp: (email: string) => {
-    const state = getDBState();
-    state.otps.delete(email.trim().toLowerCase());
+  deleteOtp: async (email: string) => {
+    await connectDB();
+    await OTP.deleteOne({ email: email.trim().toLowerCase() });
   },
-  saveReport: (report: Report) => {
-    const state = getDBState();
-    state.reports.set(report.id, report);
+  saveReport: async (reportData: any) => {
+    await connectDB();
+    return await Report.create(reportData);
   },
-  getReports: () => {
-    const state = getDBState();
-    return Array.from(state.reports.values()).sort((a, b) => b.id.localeCompare(a.id));
+  getReports: async () => {
+    await connectDB();
+    return await Report.find().sort({ createdAt: -1 }).lean();
   },
-  updateReportStatus: (id: string, status: 'ACTIVE' | 'RESOLVED') => {
-    const state = getDBState();
-    const report = state.reports.get(id);
-    if (report) {
-      report.status = status;
-      state.reports.set(id, report);
-    }
+  updateReportStatus: async (id: string, status: 'ACTIVE' | 'RESOLVED') => {
+    await connectDB();
+    await Report.findByIdAndUpdate(id, { status });
   },
-  logActivity: (log: Omit<ActivityLog, 'id' | 'timestamp'>) => {
-    const state = getDBState();
-    let id: string;
-    try {
-      id = crypto.randomUUID();
-    } catch {
-      id = `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    }
-    const timestamp = Date.now();
-    state.logs.set(id, { id, timestamp, ...log });
+  logActivity: async (log: any) => {
+    await connectDB();
+    return await ActivityLog.create({
+      ...log,
+      timestamp: new Date()
+    });
   },
-  getLogs: () => {
-    const state = getDBState();
-    return Array.from(state.logs.values()).sort((a, b) => b.timestamp - a.timestamp);
+  getLogs: async () => {
+    await connectDB();
+    return await ActivityLog.find().sort({ timestamp: -1 }).lean();
   },
-  getUsersCount: () => {
-    const state = getDBState();
-    return state.users.size;
+  getUsersCount: async () => {
+    await connectDB();
+    return await User.countDocuments();
   },
-  getActiveSessionsCount: () => {
-    const state = getDBState();
-    const logs = Array.from(state.logs.values());
-    const logins = logs.filter(l => l.action === 'LOGIN').map(l => l.email);
-    const logouts = logs.filter(l => l.action === 'LOGOUT').map(l => l.email);
-    const active = new Set(logins.filter(email => !logouts.includes(email)));
-    return active.size || 1; // Default to 1 to represent the current admin
+  getActiveSessionsCount: async () => {
+    await connectDB();
+    const oneHourAgo = new Date(Date.now() - 3600000);
+    const recentLogins = await ActivityLog.distinct('email', { 
+      action: 'LOGIN', 
+      timestamp: { $gte: oneHourAgo } 
+    });
+    return Math.max(recentLogins.length, 1);
   }
 };
+

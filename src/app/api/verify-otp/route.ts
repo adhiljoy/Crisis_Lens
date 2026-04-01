@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     
     console.log(`[VERIFY_START] Attempting verification for: ${email}`);
     
-    const record = db.getOtpRecord(email);
+    const record = await db.getOtpRecord(email);
     console.log(`[VERIFY_DEBUG] RECORD FOUND:`, record?.email, "Code:", record?.otp);
     
     if (!record) {
@@ -22,33 +22,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: 'Security code not found or expired' }, { status: 400 });
     }
 
-    if (Date.now() > record.expiresAt) {
+    if (Date.now() > record.expiresAt.getTime()) {
       console.warn(`[VERIFY_FAIL] Code expired for: ${email}`);
-      db.deleteOtp(email);
+      await db.deleteOtp(email);
       return NextResponse.json({ success: false, message: 'Uplink code has expired' }, { status: 400 });
     }
 
     if (record.attempts >= 3) {
       console.warn(`[VERIFY_FAIL] Too many attempts for: ${email}`);
-      db.deleteOtp(email);
+      await db.deleteOtp(email);
       return NextResponse.json({ success: false, message: 'Security lockout: Too many failed attempts' }, { status: 400 });
     }
 
     // Compare as string (CRITICAL)
     if (String(record.otp) !== String(otp)) {
       console.warn(`[VERIFY_FAIL] Incorrect code for: ${email}. Target: ${record.otp}, Received: ${otp}`);
-      db.incrementOtpAttempt(email);
+      await db.incrementOtpAttempt(email);
       return NextResponse.json({ success: false, message: 'Incorrect security code' }, { status: 400 });
     }
 
     // Success - Delete OTP so it cannot be reused
-    db.deleteOtp(email);
+    await db.deleteOtp(email);
     console.log(`[VERIFY_SUCCESS] Security handshake verified for: ${email}`);
 
     // Auto-create user if not exists
-    let user = db.getUserByEmail(email);
+    let user = await db.getUserByEmail(email);
     if (!user) {
-      user = db.createUser(email);
+      user = await db.createUser(email);
       console.log(`[USER_PROVISION] New operator identity created for: ${email}`);
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     console.log(`[SESSION_CREATED] Identity locked for: ${email} as ${role}`);
 
     // Activity logging
-    db.logActivity({ 
+    await db.logActivity({ 
       email, 
       action: 'LOGIN',
       data: { role } 

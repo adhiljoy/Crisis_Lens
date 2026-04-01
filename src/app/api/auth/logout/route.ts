@@ -6,7 +6,7 @@ export async function POST() {
   try {
     const session = await getSession();
     if (session?.email) {
-      db.logActivity({
+      await db.logActivity({
         email: session.email as string,
         action: 'LOGOUT',
         data: { timestamp: new Date().toISOString() }

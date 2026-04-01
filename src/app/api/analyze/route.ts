@@ -61,7 +61,7 @@ export async function POST(req: Request) {
         actions
       };
       
-      db.saveReport(mockReport);
+      await db.saveReport(mockReport);
       return NextResponse.json({ success: true, data: mockReport });
     }
 
@@ -156,17 +156,17 @@ export async function POST(req: Request) {
       actions: sanitizedData.actions
     };
 
-    db.saveReport(savedReport);
+    await db.saveReport(savedReport);
 
     // LOG ACTIVITY: REPORT
-    db.logActivity({
+    await db.logActivity({
       email: userEmail,
       action: 'REPORT',
       data: { id: savedReport.id, type: savedReport.type, severity: savedReport.severity }
     });
 
     // LOG ACTIVITY: ANALYSIS
-    db.logActivity({
+    await db.logActivity({
        email: userEmail,
        action: 'ANALYSIS',
        data: { 

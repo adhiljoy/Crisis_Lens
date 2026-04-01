@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const logs = db.getLogs();
+    const logs = await db.getLogs();
     return NextResponse.json({ success: true, data: logs });
   } catch (error) {
     console.error("Failed to fetch logs:", error);
