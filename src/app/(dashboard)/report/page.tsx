@@ -290,6 +290,32 @@ export default function ReportIncidentPage() {
               </div>
             )}
 
+            {step === 2 && !result && !isAnalyzing && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex-1 flex flex-col items-center justify-center space-y-6"
+              >
+                 <div className="relative">
+                    <div className="absolute inset-0 bg-red-500/20 blur-2xl rounded-full animate-pulse"></div>
+                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center border border-red-100 relative z-10">
+                       <AlertOctagon className="w-6 h-6 text-red-500" />
+                    </div>
+                 </div>
+                 <div className="text-center space-y-1">
+                    <p className="text-red-600 font-bold text-[10px] uppercase tracking-[0.2em]">Neural Uplink Failure</p>
+                    <p className="text-slate-400 text-[9px] font-medium max-w-[200px]">AI Nexus is currently unreachable. Check your network or API configuration.</p>
+                 </div>
+                 <Button 
+                   onClick={() => setStep(1)} 
+                   variant="outline" 
+                   className="h-10 px-6 rounded-xl border-slate-200 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-[9px] uppercase tracking-widest"
+                 >
+                   Return to Terminal
+                 </Button>
+              </motion.div>
+            )}
+
             {step === 2 && result && !isAnalyzing && (
               <motion.div 
                 initial={{ opacity: 0 }}
