@@ -7,16 +7,27 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleGoogleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      setError("Valid operator identifier required.");
+      return;
+    }
+
     setIsLoading(true);
+    setError(null);
+    
     try {
       // Direct session uplink via demo bypass as required for simplified mockup
       const response = await fetch("/api/auth/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "adhiljoyappu@gmail.com" }),
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       
       const data = await response.json();
@@ -26,17 +37,18 @@ export default function LoginPage() {
           router.push("/dashboard");
         }, 300);
       } else {
-        console.error("Grid access denied:", data.message);
+        setError(data.message || "Uplink rejected.");
         setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Communication failure:", error);
+    } catch (err) {
+      console.error("Communication failure:", err);
+      setError("Neural link failure. Try again.");
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-50 selection:bg-blue-500/30">
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-50 selection:bg-blue-500/30 font-sans">
       {/* Light Grid Background */}
       <div 
         className="absolute inset-0 z-0 opacity-[0.05]"
@@ -78,24 +90,14 @@ export default function LoginPage() {
               <div className="space-y-4">
                 <button
                   type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={isLoading}
-                  className="w-full h-16 bg-[#0f172a] rounded-[1.25rem] flex items-center justify-center gap-4 hover:opacity-95 active:scale-95 transition-all shadow-2xl group border border-white/10 relative overflow-hidden"
+                  onClick={() => setShowEmailModal(true)}
+                  className="w-full h-16 bg-[#0f172a] rounded-[1.25rem] flex items-center justify-center gap-4 hover:opacity-95 active:scale-95 transition-all shadow-2xl group border border-white/10"
                 >
-                  {isLoading && (
-                    <motion.div 
-                      className="absolute inset-0 bg-blue-600/20"
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 1, ease: "easeInOut" }}
-                    />
-                  )}
-                  
-                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shrink-0 relative z-10">
+                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shrink-0">
                     <span className="text-slate-900 font-black text-[12px]">G</span>
                   </div>
-                  <span className="font-extrabold text-[#ffffff] uppercase tracking-[0.2em] text-[11px] block relative z-10">
-                    {isLoading ? "Establishing Uplink..." : "Login with Google"}
+                  <span className="font-extrabold text-[#ffffff] uppercase tracking-[0.2em] text-[11px] block">
+                    Login with Google
                   </span>
                 </button>
               </div>
@@ -115,9 +117,79 @@ export default function LoginPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Login Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => !isLoading && setShowEmailModal(false)}
+          />
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            className="relative z-10 w-full max-w-[400px] bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-10 overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-6">
+                <button 
+                  onClick={() => setShowEmailModal(false)}
+                  className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400"
+                >
+                  <Zap className="w-4 h-4 rotate-45" />
+                </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-slate-900">Direct Uplink</h3>
+                <p className="text-slate-500 text-sm">Enter identifier for instant authorization.</p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-1">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="operator@crisislens.ai"
+                    className="w-full h-14 bg-slate-50 border border-slate-200 rounded-2xl px-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium placeholder:text-slate-400"
+                    autoFocus
+                  />
+                  {error && (
+                    <motion.p 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-red-500 text-[10px] font-bold uppercase tracking-wider pl-2"
+                    >
+                      {error}
+                    </motion.p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-14 bg-blue-600 rounded-2xl flex items-center justify-center gap-3 hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+                >
+                  {isLoading && (
+                    <motion.div 
+                      className="absolute inset-0 bg-white/20"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                  )}
+                  <span className="font-bold text-white uppercase tracking-widest text-[11px] relative z-10">
+                    {isLoading ? "Synchronizing..." : "Initiate Login"}
+                  </span>
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
-
-
-
