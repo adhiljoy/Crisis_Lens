@@ -62,16 +62,19 @@ export default function LoginPage() {
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className="w-full h-16 bg-[#0a0c10] rounded-2xl flex items-center justify-center gap-4 hover:bg-[#1a1c22] active:scale-[0.98] transition-all duration-300 shadow-xl group relative"
+                  className="w-full h-16 bg-slate-900 rounded-3xl flex items-center justify-center gap-4 hover:bg-slate-800 active:scale-95 transition-all shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] relative z-20 group"
                 >
                    {isLoading ? (
-                     <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+                     <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-white/70 font-bold uppercase tracking-widest text-[10px]">Verifying...</span>
+                     </div>
                    ) : (
-                     <div className="flex items-center gap-4">
-                        <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M44.5 20H24V29H35.8C34.7 33.9 30.1 37 24 37C16.8 37 11 31.2 11 24C11 16.8 16.8 11 24 11C27.1 11 30 12.1 32.2 14L38.9 7.3C34.8 3.5 29.7 1.5 24 1.5C11.6 1.5 1.5 11.6 1.5 24C1.5 36.4 11.6 46.5 24 46.5C35 46.5 44.5 38.6 44.5 26.5C44.5 24.5 44.2 22.5 43.8 20.5L44.5 20Z" fill="white"/>
-                        </svg>
-                        <span className="font-extrabold text-white uppercase tracking-[0.15em] text-[11px] antialiased">
+                     <div className="flex items-center items-center justify-center gap-4 w-full">
+                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
+                          <span className="text-slate-900 font-black text-[14px]">G</span>
+                        </div>
+                        <span className="font-extrabold text-white uppercase tracking-[0.2em] text-[11px]">
                           Login with Google
                         </span>
                      </div>
