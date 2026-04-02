@@ -61,24 +61,14 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  disabled={isLoading}
-                  className="w-full h-16 bg-slate-900 rounded-3xl flex items-center justify-center gap-4 hover:bg-slate-800 active:scale-95 transition-all shadow-[0_10px_40px_-10px_rgba(0,0,0,0.3)] relative z-20 group"
+                  className="w-full h-16 bg-[#0f172a] rounded-[1.25rem] flex items-center justify-center gap-4 hover:opacity-90 active:scale-95 transition-all shadow-2xl group border border-white/10"
                 >
-                   {isLoading ? (
-                     <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span className="text-white/70 font-bold uppercase tracking-widest text-[10px]">Verifying...</span>
-                     </div>
-                   ) : (
-                     <div className="flex items-center items-center justify-center gap-4 w-full">
-                        <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                          <span className="text-slate-900 font-black text-[14px]">G</span>
-                        </div>
-                        <span className="font-extrabold text-white uppercase tracking-[0.2em] text-[11px]">
-                          Login with Google
-                        </span>
-                     </div>
-                   )}
+                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shrink-0">
+                    <span className="text-slate-900 font-black text-[12px]">G</span>
+                  </div>
+                  <span className="font-extrabold text-[#ffffff] uppercase tracking-[0.2em] text-[11px] block">
+                    Login with Google
+                  </span>
                 </button>
               </div>
 
