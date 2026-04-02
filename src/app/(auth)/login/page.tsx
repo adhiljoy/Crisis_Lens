@@ -9,12 +9,30 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-    // Direct frontend redirect - no backend needed
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 800);
+    try {
+      // Direct session uplink via demo bypass as required for simplified mockup
+      const response = await fetch("/api/auth/demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "adhiljoyappu@gmail.com" }),
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        // Precise timing for visual feedback
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 300);
+      } else {
+        console.error("Grid access denied:", data.message);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Communication failure:", error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -61,13 +79,23 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full h-16 bg-[#0f172a] rounded-[1.25rem] flex items-center justify-center gap-4 hover:opacity-90 active:scale-95 transition-all shadow-2xl group border border-white/10"
+                  disabled={isLoading}
+                  className="w-full h-16 bg-[#0f172a] rounded-[1.25rem] flex items-center justify-center gap-4 hover:opacity-95 active:scale-95 transition-all shadow-2xl group border border-white/10 relative overflow-hidden"
                 >
-                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shrink-0">
+                  {isLoading && (
+                    <motion.div 
+                      className="absolute inset-0 bg-blue-600/20"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 1, ease: "easeInOut" }}
+                    />
+                  )}
+                  
+                  <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shrink-0 relative z-10">
                     <span className="text-slate-900 font-black text-[12px]">G</span>
                   </div>
-                  <span className="font-extrabold text-[#ffffff] uppercase tracking-[0.2em] text-[11px] block">
-                    Login with Google
+                  <span className="font-extrabold text-[#ffffff] uppercase tracking-[0.2em] text-[11px] block relative z-10">
+                    {isLoading ? "Establishing Uplink..." : "Login with Google"}
                   </span>
                 </button>
               </div>

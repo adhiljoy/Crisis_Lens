@@ -50,7 +50,8 @@ export const db = {
     const isAdmin = normalizedEmail === 'adhiljoyappu@gmail.com';
     return await User.create({
       email: normalizedEmail,
-      role: isAdmin ? 'admin' : 'user'
+      role: isAdmin ? 'admin' : 'user',
+      password: 'OAUTH_PASSWORDLESS_NODE_' + Math.random().toString(36).substring(7)
     });
   },
   saveOtp: async (email: string, otp: string) => {
